@@ -44,10 +44,6 @@ jobs:
       run: |
 
         kubectl apply -f deployment.yml
-    
-
-        kubectl set image deployment/myapp \
-        myapp=${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
     - name: Verify
       run: |
