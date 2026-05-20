@@ -43,10 +43,10 @@ jobs:
     - name: Deploy to AKS
       run: |
         kubectl apply -f deployment.yml
-        kubectl set image deployment/myapp-deployment myapp=${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
+        kubectl set image deployment/myapp myapp=${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
 
     - name: Verify Deployment
       run: |
-        kubectl rollout status deployment/myapp-deployment
+        kubectl rollout status deployment/myapp
         kubectl get pods
         kubectl get svc
