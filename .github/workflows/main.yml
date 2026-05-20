@@ -1,4 +1,4 @@
-name: Deploy CICD with AKS...
+name: Deploy CICD with AKS
 on:
   push:
     branches:
@@ -26,6 +26,13 @@ jobs:
       - name: Build and push Docker image to ACR
         run: |
           docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }} .
+          - task: AzureCLI@2
+            inputs:
+                azureSubscription: ${{ secrets.AZURE_CREDENTIALS }}
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az acr login --name ${{ secrets.ACR_NAME }}
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
 
       - name: Set up AKS Context
@@ -44,3 +51,5 @@ jobs:
           kubectl rollout status deployment/myapp-deployment
           kubectl get pods
           kubectl get svc
+
+   
