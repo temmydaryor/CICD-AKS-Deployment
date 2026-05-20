@@ -1,55 +1,51 @@
 name: Deploy CICD with AKS
+
 on:
   push:
     branches:
       - main
+
 env:
   IMAGE_NAME: myapp
 
 jobs:
   deploy-on-aks:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    - name: Login to Azure Container Registry
+      run: |
+        az acr login --name ${{ secrets.ACR_NAME }}
 
-      - name: login to Azure Container Registry
-        run:
-            az acr login --name ${{ secrets.ACR_NAME }}
-        
-      - name: Build and push Docker image to ACR
-        run: |
-          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }} .
-          - task: AzureCLI@2
-            inputs:
-                azureSubscription: ${{ secrets.AZURE_CREDENTIALS }}
-                scriptType: 'bash'
-                scriptLocation: 'inlineScript'
-                inlineScript: |
-                  az acr login --name ${{ secrets.ACR_NAME }}
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }} .
 
-      - name: Set up AKS Context
-        uses: azure/aks-set-context@v4
-        with:
-          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
-          resource-group: ${{ secrets.RESOURCE_GROUP }}
-         
-      - name: Deploy to AKS
-        run: |
-          kubectl create -f deployment.yml
-          kubectl set image deployment/myapp-deployment myapp=${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
+    - name: Push Docker image to ACR
+      run: |
+        docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
 
-      - name: Verify Deployment
-        run: |
-          kubectl rollout status deployment/myapp-deployment
-          kubectl get pods
-          kubectl get svc
+    - name: Set up AKS Context
+      uses: azure/aks-set-context@v4
+      with:
+        cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+        resource-group: ${{ secrets.RESOURCE_GROUP }}
 
-   
+    - name: Deploy to AKS
+      run: |
+        kubectl apply -f deployment.yml
+        kubectl set image deployment/myapp-deployment myapp=${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
+
+    - name: Verify Deployment
+      run: |
+        kubectl rollout status deployment/myapp-deployment
+        kubectl get pods
+        kubectl get svc
