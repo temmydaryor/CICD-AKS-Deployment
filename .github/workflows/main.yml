@@ -1,4 +1,4 @@
-name: Deploy CICD with AKS
+name: Deploy CICD with AKS..
 on:
   push:
     branches:
